@@ -1,0 +1,92 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}Analytics – SmartStudy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Study vs. Grade Analytics</h1>
+</div>
+
+<div class="card">
+  <div class="card-title">Hours Studied vs. Current Grade</div>
+  {% if chart_data_json %}
+    <canvas id="studyGradeChart" height="320"></canvas>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top:1rem;">
+  <div class="card-title">How to read this</div>
+  <p class="text-muted">
+    Bars show total focused study hours logged per course via Pomodoro sessions.
+    The line shows your current weighted grade for that course. If a course has
+    a lot of hours but a low grade, your study methods for that subject may need
+    a rethink — try shorter, more frequent sessions or active recall instead of
+    passive review.
+  </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  const chartData = {{ chart_data_json|safe }};
+
+  const ctx = document.getElementById('studyGradeChart');
+  if (ctx) {
+    new Chart(ctx, {
+      data: {
+        labels: chartData.labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Study Hours',
+            data: chartData.hours,
+            backgroundColor: 'rgba(127,119,221,.6)',
+            borderColor: '#7F77DD',
+            borderWidth: 1,
+            yAxisID: 'y',
+          },
+          {
+            type: 'line',
+            label: 'Current Grade (%)',
+            data: chartData.grades,
+            borderColor: '#1D9E75',
+            backgroundColor: '#1D9E75',
+            tension: 0.3,
+            yAxisID: 'y1',
+            spanGaps: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            title: { display: true, text: 'Hours', color: '#aaa' },
+            grid: { color: 'rgba(255,255,255,.06)' },
+            ticks: { color: '#aaa' },
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            min: 0,
+            max: 100,
+            title: { display: true, text: 'Grade %', color: '#aaa' },
+            grid: { drawOnChartArea: false },
+            ticks: { color: '#aaa' },
+          },
+          x: {
+            ticks: { color: '#aaa' },
+            grid: { color: 'rgba(255,255,255,.04)' },
+          },
+        },
+        plugins: {
+          legend: { labels: { color: '#e8e6f0' } },
+        },
+      },
+    });
+  }
+</script>
+{% endblock %}

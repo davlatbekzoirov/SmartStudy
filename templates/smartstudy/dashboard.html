@@ -1,0 +1,130 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}Dashboard – SmartStudy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Dashboard</h1>
+  <a href="{% url 'course_create' %}" class="btn btn-primary">+ New Course</a>
+</div>
+
+{% if burnout_warnings %}
+  {% for w in burnout_warnings %}
+    <div class="card" style="border-color: rgba(226,75,74,.4); background: rgba(226,75,74,.08); margin-bottom: 1rem;">
+      <div class="flex-between">
+        <div>
+          <div class="card-title" style="color:#f09595;">
+            {% if w.type == 'overwork' %}⚠ Time for a break{% else %}⚠ Heavy schedule ahead{% endif %}
+          </div>
+          <p style="font-size:14px; color:#e8e6f0;">{{ w.message }}</p>
+        </div>
+        <a href="{% url 'schedule' %}" class="btn btn-outline btn-sm" style="white-space:nowrap;">Review schedule</a>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Stats -->
+<div class="stat-grid">
+  <div class="stat stat-purple">
+    <div class="stat-label">Avg Grade</div>
+    <div class="stat-value">{{ avg_letter }}</div>
+    <div class="stat-sub">{% if avg_grade %}{{ avg_grade }}%{% else %}No grades yet{% endif %}</div>
+  </div>
+  <div class="stat stat-teal">
+    <div class="stat-label">Courses</div>
+    <div class="stat-value">{{ total_courses }}</div>
+    <div class="stat-sub">enrolled</div>
+  </div>
+  <div class="stat stat-amber">
+    <div class="stat-label">Assignments</div>
+    <div class="stat-value">{{ total_assignments }}</div>
+    <div class="stat-sub">total tracked</div>
+  </div>
+  <div class="stat stat-blue">
+    <div class="stat-label">Pomodoros</div>
+    <div class="stat-value">{{ pomodoro_count }}</div>
+    <div class="stat-sub">sessions done</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+  <!-- Course grades -->
+  <div class="card">
+    <div class="card-title">Course Grades</div>
+    {% if course_summaries %}
+      {% for s in course_summaries %}
+        <div style="margin-bottom:.85rem;">
+          <div class="flex-between" style="margin-bottom:4px;">
+            <span class="gap-2">
+              <span class="color-dot" style="background:{{ s.course.color }};"></span>
+              <a href="{% url 'course_detail' s.course.pk %}" style="color:#e8e6f0;font-size:14px;font-weight:500;">{{ s.course.name }}</a>
+            </span>
+            <span style="font-size:13px;color:#aaa;">
+              {% if s.grade %}{{ s.grade }}% &nbsp;<strong style="color:#e8e6f0;">{{ s.letter }}</strong>{% else %}—{% endif %}
+            </span>
+          </div>
+          {% if s.grade %}
+          <div class="score-bar">
+            <div class="score-fill {% if s.grade >= 80 %}score-fill-green{% elif s.grade >= 70 %}score-fill-blue{% endif %}"
+                 style="width:{{ s.grade }}%;"></div>
+          </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty" style="padding:1.5rem;">
+        <div class="empty-icon">📚</div>
+        <p>No courses yet. <a href="{% url 'course_create' %}">Add one!</a></p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Upcoming assignments -->
+  <div class="card">
+    <div class="card-title">Upcoming Due</div>
+    {% if upcoming %}
+      {% for a in upcoming %}
+        <div style="margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:1px solid rgba(255,255,255,.05);">
+          <div class="flex-between">
+            <span style="font-size:14px;font-weight:500;">{{ a.title }}</span>
+            {% with d=a.days_until_due %}
+              {% if d is not None %}
+                <span class="{% if d <= 1 %}days-urgent{% elif d <= 3 %}days-soon{% else %}text-muted{% endif %}">
+                  {% if d == 0 %}Today!{% elif d == 1 %}Tomorrow{% else %}{{ d }}d{% endif %}
+                </span>
+              {% endif %}
+            {% endwith %}
+          </div>
+          <div class="text-muted">{{ a.course.name }} · {{ a.category.name }}</div>
+        </div>
+      {% endfor %}
+      <a href="{% url 'schedule' %}" class="text-muted" style="font-size:13px;">View schedule →</a>
+    {% else %}
+      <div class="empty" style="padding:1.5rem;">
+        <div class="empty-icon">✅</div>
+        <p>All clear!</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Today's study blocks -->
+{% if today_blocks %}
+<div class="card" style="margin-top:1rem;">
+  <div class="card-title">Today's Study Blocks</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    {% for block in today_blocks %}
+      <div style="background:#1e1e1d;border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 14px;font-size:13px;">
+        <span class="color-dot" style="background:{{ block.course.color }};"></span>
+        &nbsp;<strong>{{ block.course.name }}</strong>
+        {% if block.assignment %} – {{ block.assignment.title }}{% endif %}
+        &nbsp;·&nbsp; {{ block.duration_minutes }}min
+        {% if block.completed %}<span style="color:#1D9E75;">✓</span>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

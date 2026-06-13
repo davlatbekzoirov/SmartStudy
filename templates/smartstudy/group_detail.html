@@ -1,0 +1,71 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}{{ group.name }} – SmartStudy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ group.name }}</h1>
+  {% if is_member %}
+    <form method="post" action="{% url 'group_leave' group.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline btn-sm">Leave Group</button>
+    </form>
+  {% endif %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+  <div class="card">
+    <div class="card-title">Course</div>
+    <p style="font-size:14px;">{{ group.shared_course }}</p>
+
+    <div class="divider"></div>
+
+    <div class="card-title">Crowd-sourced Exam Date</div>
+    {% if consensus_date %}
+      <div class="stat stat-amber" style="margin-top:.5rem;">
+        <div class="stat-label">Most likely next exam</div>
+        <div class="stat-value" style="font-size:20px;">{{ consensus_date }}</div>
+        <div class="stat-sub">based on {{ group.exam_votes.count }} submission{{ group.exam_votes.count|pluralize }}</div>
+      </div>
+    {% else %}
+      <p class="text-muted">No exam dates submitted yet.</p>
+    {% endif %}
+
+    {% if is_member %}
+      <div class="divider"></div>
+      <div class="form-section-title">
+        {% if my_vote %}Update your submitted date{% else %}Submit the exam date{% endif %}
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="{{ vote_form.exam_date.id_for_label }}">Exam Date &amp; Time</label>
+          {{ vote_form.exam_date }}
+          {{ vote_form.exam_date.errors }}
+        </div>
+        <button type="submit" name="submit_exam_date" class="btn btn-primary btn-sm">
+          {% if my_vote %}Update{% else %}Submit{% endif %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-title">Members ({{ members.count }})</div>
+    {% for member in members %}
+      <div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:14px;">
+        {{ member.username }}
+      </div>
+    {% endfor %}
+
+    {% if not is_member %}
+      <div class="divider"></div>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="join" class="btn btn-success">Join this group</button>
+      </form>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

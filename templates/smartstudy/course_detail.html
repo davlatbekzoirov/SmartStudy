@@ -1,0 +1,196 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}{{ course.name }} – SmartStudy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="text-muted" style="margin-bottom:4px;">
+      <a href="{% url 'course_list' %}">Courses</a> /
+    </div>
+    <h1 class="page-title gap-2">
+      <span class="color-dot" style="background:{{ course.color }};width:14px;height:14px;"></span>
+      {{ course.name }} {% if course.code %}<span class="text-muted" style="font-weight:400;">({{ course.code }})</span>{% endif %}
+    </h1>
+  </div>
+  <div class="gap-2">
+    <a href="{% url 'category_create' course.pk %}" class="btn btn-outline btn-sm">+ Category</a>
+    <a href="{% url 'assignment_create' course.pk %}" class="btn btn-primary btn-sm">+ Assignment</a>
+    <a href="{% url 'course_edit' course.pk %}" class="btn btn-outline btn-sm">Edit</a>
+  </div>
+</div>
+
+<!-- Grade overview -->
+<div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem;">
+  <div class="stat stat-purple">
+    <div class="stat-label">Overall Grade</div>
+    <div class="stat-value">{{ letter }}</div>
+    <div class="stat-sub">{% if grade %}{{ grade }}%{% else %}No grades yet{% endif %}</div>
+  </div>
+  <div class="stat stat-teal">
+    <div class="stat-label">Categories</div>
+    <div class="stat-value">{{ categories.count }}</div>
+    <div class="stat-sub">weighted</div>
+  </div>
+  <div class="stat stat-amber">
+    <div class="stat-label">Assignments</div>
+    <div class="stat-value">{% for cat in categories %}{% for a in cat.assignments.all %}{% if forloop.last and forloop.parentloop.last %}{% with total=forloop.counter %}{{ total }}{% endwith %}{% endif %}{% endfor %}{% endfor %}</div>
+    <div class="stat-sub">tracked</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;">
+
+  <!-- Left: categories & assignments -->
+  <div>
+    {% for cat in categories %}
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="flex-between" style="margin-bottom:.75rem;">
+        <div>
+          <span style="font-weight:600;font-size:15px;">{{ cat.name }}</span>
+          <span class="text-muted" style="margin-left:8px;">{{ cat.weight }}% weight</span>
+        </div>
+        <div class="gap-2">
+          <span style="font-size:13px;color:#aaa;">
+            {% with g=cat.computed_grade %}{% if g %}{{ g }}%{% else %}–{% endif %}{% endwith %}
+          </span>
+          <a href="{% url 'category_delete' cat.pk %}" class="btn btn-danger btn-sm">✕</a>
+        </div>
+      </div>
+
+      {% if cat.assignments.all %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Assignment</th><th>Due</th><th>Score</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for a in cat.assignments.all %}
+            <tr>
+              <td style="font-weight:500;">{{ a.title }}</td>
+              <td class="text-muted">
+                {% if a.due_date %}
+                  {{ a.due_date|date:"M j" }}
+                  {% with d=a.days_until_due %}
+                    {% if d is not None and a.score is None %}
+                      <span class="{% if d <= 1 %}days-urgent{% elif d <= 3 %}days-soon{% endif %}">
+                        ({% if d == 0 %}today{% elif d < 0 %}overdue{% else %}{{ d }}d{% endif %})
+                      </span>
+                    {% endif %}
+                  {% endwith %}
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                {% if a.score is not None %}
+                  {{ a.score }}/{{ a.max_score }}
+                  <span class="text-muted">({{ a.percentage }}%)</span>
+                {% else %}—{% endif %}
+              </td>
+              <td><span class="badge badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+              <td>
+                <div class="gap-2">
+                  <a href="{% url 'assignment_edit' a.pk %}" class="btn btn-outline btn-sm">Edit</a>
+                  <a href="{% url 'assignment_delete' a.pk %}" class="btn btn-danger btn-sm">✕</a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <p class="text-muted" style="font-size:13px;">No assignments yet. <a href="{% url 'assignment_create' course.pk %}">Add one.</a></p>
+      {% endif %}
+    </div>
+    {% empty %}
+      <div class="card">
+        <div class="empty">
+          <div class="empty-icon">🗂️</div>
+          <p>No grade categories yet.<br>
+          <a href="{% url 'category_create' course.pk %}">Add Finals, Homework, Quizzes…</a></p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Right: What-If + Needed Score -->
+  <div>
+
+    <!-- What-If Calculator -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-title">🧮 What-If Calculator</div>
+      <p class="text-muted" style="font-size:13px;margin-bottom:1rem;">Enter hypothetical scores to see your projected grade.</p>
+      <form method="post">
+        {% csrf_token %}
+        {% for cat in categories %}
+          {% for a in cat.assignments.all %}
+            {% if a.score is None %}
+            <div class="form-group">
+              <label>{{ a.title }} <span style="font-weight:400;color:#666;">({{ cat.name }}, /{{ a.max_score }})</span></label>
+              <input type="number" name="hyp_{{ a.id }}" min="0" max="{{ a.max_score }}" step="0.1"
+                     placeholder="Score / {{ a.max_score }}"
+                     value="{{ hypotheticals|default_if_none:'' }}">
+            </div>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+        <button type="submit" name="what_if" value="1" class="btn btn-primary btn-sm" style="width:100%;">Calculate</button>
+      </form>
+
+      {% if what_if_result %}
+      <hr class="divider">
+      <div style="text-align:center;margin-bottom:.75rem;">
+        <div style="font-size:28px;font-weight:700;color:#7F77DD;">{{ what_if_result.overall|default:"–" }}%</div>
+        <div class="text-muted">Projected Overall · {{ what_if_result.letter }}</div>
+      </div>
+      {% for cat_id, data in what_if_result.categories.items %}
+        {% if data.grade %}
+        <div style="font-size:13px;margin-bottom:4px;" class="flex-between">
+          <span>{{ data.name }}</span>
+          <span style="color:#aaa;">{{ data.grade|floatformat:1 }}% × {{ data.weight }}%</span>
+        </div>
+        {% endif %}
+      {% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- Needed Score -->
+    <div class="card">
+      <div class="card-title">🎯 Needed Score</div>
+      <p class="text-muted" style="font-size:13px;margin-bottom:1rem;">What score do you need on the next assignment?</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Target Grade (%)</label>
+          <input type="number" name="target_grade" min="0" max="100" step="0.1"
+                 value="{{ target_grade|default:90 }}" placeholder="e.g. 90">
+        </div>
+        <button type="submit" name="target_grade_submit" value="1" class="btn btn-success btn-sm" style="width:100%;">Calculate</button>
+      </form>
+
+      {% if needed_result %}
+      <hr class="divider">
+      {% if needed_result.next_assignment %}
+        <div style="font-size:13px;color:#aaa;margin-bottom:6px;">Next: <strong style="color:#e8e6f0;">{{ needed_result.next_assignment.title }}</strong></div>
+        {% if needed_result.possible %}
+          <div style="text-align:center;">
+            <div style="font-size:28px;font-weight:700;color:#1D9E75;">{{ needed_result.needed }}%</div>
+            <div class="text-muted">{{ needed_result.needed_points }} / {{ needed_result.max_score }} points</div>
+          </div>
+        {% elif needed_result.needed > 100 %}
+          <div style="color:#E24B4A;font-size:14px;text-align:center;">
+            Requires {{ needed_result.needed }}% — not achievable on this assignment alone.
+          </div>
+        {% else %}
+          <div style="color:#1D9E75;font-size:14px;text-align:center;">
+            Any score will suffice — you're already on track!
+          </div>
+        {% endif %}
+      {% else %}
+        <p class="text-muted" style="font-size:13px;">No upcoming ungraded assignments found.</p>
+      {% endif %}
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

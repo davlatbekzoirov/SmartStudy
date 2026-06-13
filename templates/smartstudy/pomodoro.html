@@ -1,0 +1,255 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}Pomodoro – SmartStudy{% endblock %}
+
+{% block extra_head %}
+<style>
+  .timer-ring { transition: stroke-dashoffset .9s linear; }
+  .pom-state-idle    .timer-circle { stroke: rgba(255,255,255,.15); }
+  .pom-state-running .timer-circle { stroke: #534AB7; }
+  .pom-state-break   .timer-circle { stroke: #1D9E75; }
+  .pom-state-done    .timer-circle { stroke: #BA7517; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Pomodoro Timer</h1>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
+
+  <!-- Timer -->
+  <div class="card" style="text-align:center;">
+    <div id="timerWrap" class="pom-state-idle" style="display:inline-block;position:relative;margin:1.5rem auto;">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+        <circle id="timerCircle" class="timer-ring timer-circle" cx="100" cy="100" r="88"
+                fill="none" stroke="#534AB7" stroke-width="10"
+                stroke-dasharray="553" stroke-dashoffset="0"
+                stroke-linecap="round" transform="rotate(-90 100 100)"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+        <div id="timerDisplay" style="font-size:42px;font-weight:700;letter-spacing:-.02em;">{{ prefs.pomodoro_work_minutes }}:00</div>
+        <div id="timerMode" class="text-muted" style="font-size:13px;">Focus</div>
+      </div>
+    </div>
+
+    <div id="timerControls" class="gap-2" style="justify-content:center;margin-bottom:1.25rem;">
+      <button id="btnStart" class="btn btn-primary" onclick="startTimer()">▶ Start</button>
+      <button id="btnPause" class="btn btn-outline" onclick="pauseTimer()" style="display:none;">⏸ Pause</button>
+      <button id="btnReset" class="btn btn-outline" onclick="resetTimer()">↺ Reset</button>
+    </div>
+
+    <hr class="divider">
+    <div id="sessionCount" class="text-muted" style="font-size:13px;margin-bottom:1rem;">
+      Session <span id="sesNum">1</span> of today
+    </div>
+
+    <!-- Log form (shown when session completes) -->
+    <div id="logForm" style="display:none;">
+      <div class="form-section-title">Log this session</div>
+      <div class="form-group">
+        <label>Course</label>
+        <select id="logCourse">
+          <option value="">— None —</option>
+          {% for s in by_course %}
+          <option value="">{{ s.course__name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <input type="text" id="logNotes" placeholder="What did you work on?">
+      </div>
+      <button class="btn btn-success btn-sm" style="width:100%;" onclick="logSession()">💾 Save Session</button>
+    </div>
+  </div>
+
+  <!-- Stats & History -->
+  <div>
+    <!-- Summary -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-title">Focus Stats</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div style="background:#1e1e1d;border-radius:10px;padding:.75rem 1rem;">
+          <div class="text-muted" style="font-size:11px;margin-bottom:2px;">TOTAL HOURS</div>
+          <div style="font-size:24px;font-weight:700;">{{ total_hours }}h</div>
+        </div>
+        <div style="background:#1e1e1d;border-radius:10px;padding:.75rem 1rem;">
+          <div class="text-muted" style="font-size:11px;margin-bottom:2px;">SESSIONS</div>
+          <div style="font-size:24px;font-weight:700;">{{ total_sessions }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- By course -->
+    {% if by_course %}
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-title">By Course</div>
+      {% for row in by_course %}
+      <div style="margin-bottom:.75rem;">
+        <div class="flex-between" style="margin-bottom:3px;">
+          <span style="font-size:13px;font-weight:500;">{{ row.course__name }}</span>
+          <span class="text-muted">{{ row.total }}min · {{ row.count }} sessions</span>
+        </div>
+        <div class="score-bar">
+          {% with pct=row.total|floatformat:0 %}
+          <div class="score-fill" style="background:{{ row.course__color }};width:{% widthratio row.total by_course.0.total 100 %}%;"></div>
+          {% endwith %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Recent -->
+    {% if recent %}
+    <div class="card">
+      <div class="card-title">Recent Sessions</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>When</th><th>Course</th><th>Min</th></tr></thead>
+          <tbody>
+            {% for s in recent %}
+            <tr>
+              <td class="text-muted">{{ s.started_at|date:"M j g:i A" }}</td>
+              <td>{% if s.course %}<span class="gap-2">
+                <span class="color-dot" style="background:{{ s.course.color }};"></span>{{ s.course.name }}
+              </span>{% else %}—{% endif %}</td>
+              <td>{{ s.duration_minutes }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const WORK_MIN = {{ prefs.pomodoro_work_minutes }};
+const BREAK_MIN = {{ prefs.pomodoro_break_minutes }};
+const CSRF = '{{ csrf_token }}';
+
+// Build course map from server
+const COURSES = [
+  {% for row in by_course %}
+  {% endfor %}
+];
+
+let totalSec, remainSec, timerInt, isRunning = false, isBreak = false, sessionsDone = 0;
+const CIRCUMFERENCE = 2 * Math.PI * 88;
+
+function secToDisplay(s) {
+  const m = String(Math.floor(s / 60)).padStart(2, '0');
+  const sec = String(s % 60).padStart(2, '0');
+  return `${m}:${sec}`;
+}
+
+function updateRing() {
+  const frac = remainSec / totalSec;
+  const offset = CIRCUMFERENCE * (1 - frac);
+  document.getElementById('timerCircle').style.strokeDashoffset = offset;
+}
+
+function setMode(mode) {
+  const wrap = document.getElementById('timerWrap');
+  wrap.className = `pom-state-${mode}`;
+  const colors = { idle:'rgba(255,255,255,.3)', running:'#534AB7', break:'#1D9E75', done:'#BA7517' };
+  document.getElementById('timerCircle').style.stroke = colors[mode] || '#534AB7';
+}
+
+function resetTimer() {
+  clearInterval(timerInt);
+  isRunning = false; isBreak = false;
+  totalSec = remainSec = WORK_MIN * 60;
+  document.getElementById('timerDisplay').textContent = secToDisplay(remainSec);
+  document.getElementById('timerMode').textContent = 'Focus';
+  document.getElementById('timerCircle').style.strokeDashoffset = 0;
+  document.getElementById('btnStart').style.display = '';
+  document.getElementById('btnPause').style.display = 'none';
+  document.getElementById('logForm').style.display = 'none';
+  setMode('idle');
+}
+
+function startTimer() {
+  if (!isRunning) {
+    isRunning = true;
+    setMode(isBreak ? 'break' : 'running');
+    document.getElementById('btnStart').style.display = 'none';
+    document.getElementById('btnPause').style.display = '';
+    timerInt = setInterval(() => {
+      remainSec--;
+      document.getElementById('timerDisplay').textContent = secToDisplay(remainSec);
+      updateRing();
+      if (remainSec <= 0) {
+        clearInterval(timerInt);
+        isRunning = false;
+        if (!isBreak) {
+          sessionsDone++;
+          document.getElementById('sesNum').textContent = sessionsDone;
+          setMode('done');
+          document.getElementById('timerMode').textContent = '🎉 Done!';
+          document.getElementById('logForm').style.display = '';
+          document.getElementById('btnStart').style.display = '';
+          document.getElementById('btnPause').style.display = 'none';
+          // Auto-start break prompt
+          setTimeout(() => startBreak(), 1500);
+        } else {
+          resetTimer();
+        }
+      }
+    }, 1000);
+  }
+}
+
+function pauseTimer() {
+  clearInterval(timerInt);
+  isRunning = false;
+  setMode('idle');
+  document.getElementById('btnStart').style.display = '';
+  document.getElementById('btnPause').style.display = 'none';
+}
+
+function startBreak() {
+  isBreak = true;
+  totalSec = remainSec = BREAK_MIN * 60;
+  document.getElementById('timerMode').textContent = '☕ Break';
+  document.getElementById('timerCircle').style.strokeDashoffset = 0;
+  startTimer();
+}
+
+async function logSession() {
+  const courseSelect = document.getElementById('logCourse');
+  const notes = document.getElementById('logNotes').value;
+  const courseId = courseSelect.value || null;
+  const resp = await fetch('{% url "pomodoro_log" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ course_id: courseId, duration_minutes: WORK_MIN, notes }),
+  });
+  if (resp.ok) {
+    document.getElementById('logForm').style.display = 'none';
+    // flash success
+    const msg = document.createElement('div');
+    msg.className = 'message message-success';
+    msg.textContent = '✓ Session saved!';
+    document.querySelector('.messages') ? document.querySelector('.messages').appendChild(msg)
+      : document.querySelector('.container').prepend(Object.assign(document.createElement('div'), {className:'messages', innerHTML: msg.outerHTML}));
+    setTimeout(() => msg.remove(), 3000);
+  }
+}
+
+// Init
+resetTimer();
+// Populate course dropdown from actual courses
+const courseSelect = document.getElementById('logCourse');
+{% for row in by_course %}
+// (already rendered server-side)
+{% endfor %}
+</script>
+{% endblock %}

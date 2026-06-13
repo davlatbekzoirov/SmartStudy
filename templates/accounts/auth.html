@@ -1,0 +1,50 @@
+{% extends 'smartstudy/base.html' %}
+{% block title %}{% if mode == 'login' %}Sign In{% else %}Create Account{% endif %} — UniTracker{% endblock %}
+{% block content %}
+<div style="max-width:420px;margin:3.5rem auto">
+
+  <div style="text-align:center;margin-bottom:2rem">
+    <div style="
+      width:56px;height:56px;
+      background:linear-gradient(135deg,#534AB7,#7F77DD);
+      border-radius:16px;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 1rem;
+      box-shadow:0 6px 20px rgba(83,74,183,.35);
+      font-size:26px;
+    ">🎓</div>
+    <h1 style="font-size:22px;font-weight:700;letter-spacing:-.02em">
+      {% if mode == 'login' %}Welcome back{% else %}Create your account{% endif %}
+    </h1>
+    <p style="color:#888;font-size:14px;margin-top:5px">Track every application in one place</p>
+  </div>
+
+  <div class="card" style="border-radius:16px;padding:2rem;box-shadow:0 4px 24px rgba(83,74,183,.1)">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% if form.non_field_errors %}
+        <div style="color:#A32D2D;font-size:13px;margin-bottom:.75rem;padding:8px 12px;background:#FCEBEB;border-radius:8px">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.75rem;padding:11px 18px;font-size:15px;border-radius:10px">
+        {% if mode == 'login' %}Sign in{% else %}Create account{% endif %}
+      </button>
+    </form>
+  </div>
+
+  <p style="text-align:center;font-size:14px;color:#888;margin-top:1.25rem">
+    {% if mode == 'login' %}No account? <a href="{% url 'register' %}" style="color:#534AB7;font-weight:600">Register</a>
+    {% else %}Have an account? <a href="{% url 'login' %}" style="color:#534AB7;font-weight:600">Sign in</a>{% endif %}
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}New Study Group – SmartStudy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Create a Study Group</h1>
+</div>
+
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="{{ form.name.id_for_label }}">Group Name</label>
+      {{ form.name }}
+      {{ form.name.errors }}
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="{{ form.shared_course_name.id_for_label }}">Course Name</label>
+        {{ form.shared_course_name }}
+        {{ form.shared_course_name.errors }}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.shared_course_code.id_for_label }}">Course Code (optional)</label>
+        {{ form.shared_course_code }}
+        {{ form.shared_course_code.errors }}
+      </div>
+    </div>
+    <div class="flex-between">
+      <a href="{% url 'group_list' %}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">Create Group</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

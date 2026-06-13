@@ -1,0 +1,26 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}Add Category – SmartStudy{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Add Grade Category — {{ course.name }}</h1>
+</div>
+<div class="card" style="max-width:480px;">
+  <p class="text-muted" style="margin-bottom:1rem;font-size:13px;">
+    E.g. "Finals" at 30%, "Homework" at 25%. Weights should sum to 100%.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="form-group">
+      <label>{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    {% endfor %}
+    <div class="gap-2" style="margin-top:1.5rem;">
+      <button type="submit" class="btn btn-primary">Add Category</button>
+      <a href="{% url 'course_detail' course.pk %}" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

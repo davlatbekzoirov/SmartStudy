@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SmartStudy{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: rgb(20,20,19); color: #e8e6f0; font-size: 15px; line-height: 1.6; }
+    a { color: #9C97E8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ─── Nav ─────────────────────────────────────────── */
+    .nav {
+      background: #1e1e1d;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      padding: 0 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px; position: sticky; top: 0; z-index: 10;
+    }
+    .nav-brand {
+      font-size: 15px; font-weight: 600; color: #fff;
+      display: flex; align-items: center; gap: 8px; letter-spacing: -.01em;
+    }
+    .nav-brand::before {
+      content: '';
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #7F77DD; display: inline-block;
+    }
+    .nav-links { display: flex; gap: 4px; align-items: center; }
+    .nav-links a {
+      padding: 6px 12px; border-radius: 6px; font-size: 13px;
+      color: rgba(255,255,255,.5); transition: all .18s;
+    }
+    .nav-links a:hover { background: rgba(255,255,255,.08); color: #fff; text-decoration: none; }
+    .nav-links a.active { background: #534AB7; color: #fff; }
+    .nav-user { font-size: 13px; color: rgba(255,255,255,.4); }
+    .nav-user a { color: #7F77DD; }
+    .nav-user a:hover { color: #AFA9EC; }
+
+    /* ─── Layout ──────────────────────────────────────── */
+    .container { max-width: 920px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .page-title { font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+
+    /* ─── Cards ───────────────────────────────────────── */
+    .card {
+      background: #2a2a28;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    .card + .card { margin-top: 1rem; }
+    .card-title { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 1rem; }
+
+    /* ─── Stat grid ───────────────────────────────────── */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+    .stat { border-radius: 12px; padding: 1rem 1.125rem; position: relative; overflow: hidden; }
+    .stat-purple { background: linear-gradient(135deg, #534AB7 0%, #3C3489 100%); }
+    .stat-teal   { background: linear-gradient(135deg, #1D9E75 0%, #0F6E56 100%); }
+    .stat-amber  { background: linear-gradient(135deg, #BA7517 0%, #854F0B 100%); }
+    .stat-blue   { background: linear-gradient(135deg, #185FA5 0%, #0C447C 100%); }
+    .stat::after {
+      content: ''; position: absolute; bottom: -20px; right: -20px;
+      width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,.12);
+    }
+    .stat-label { font-size: 11px; color: rgba(255,255,255,.65); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-value { font-size: 30px; font-weight: 700; color: #fff; line-height: 1; }
+    .stat-sub   { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 4px; }
+
+    /* ─── Table ───────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: #666; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,.06); }
+    td { padding: 11px 12px; border-bottom: 1px solid rgba(255,255,255,.05); vertical-align: middle; color: #e8e6f0; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.04); }
+
+    /* ─── Badges ──────────────────────────────────────── */
+    .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; letter-spacing: .02em; }
+    .badge-upcoming   { background: #EEEDFE; color: #3C3489; }
+    .badge-in_progress{ background: #FAEEDA; color: #633806; }
+    .badge-submitted  { background: #E6F1FB; color: #0C447C; }
+    .badge-graded     { background: #EAF3DE; color: #27500A; }
+    .badge-reach  { background: #FAEEDA; color: #633806; }
+    .badge-match  { background: #EEEDFE; color: #3C3489; }
+    .badge-safety { background: #E1F5EE; color: #085041; }
+    .badge-urgent { background: #FCEBEB; color: #A32D2D; }
+
+    /* ─── Buttons ─────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px; border-radius: 9px; font-size: 14px; font-weight: 500;
+      cursor: pointer; border: none;
+      transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, background .18s ease;
+      text-decoration: none; position: relative; overflow: hidden;
+    }
+    .btn::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0); transition: background .18s; }
+    .btn:hover { text-decoration: none; transform: translateY(-2px); }
+    .btn:hover::after { background: rgba(255,255,255,.1); }
+    .btn:active { transform: scale(.96) translateY(0); }
+    .btn-primary { background: linear-gradient(135deg, #534AB7, #7F77DD); color: #fff; box-shadow: 0 2px 10px rgba(83,74,183,.35); }
+    .btn-primary:hover { box-shadow: 0 5px 18px rgba(83,74,183,.45); }
+    .btn-success { background: linear-gradient(135deg, #1D9E75, #5DCAA5); color: #fff; box-shadow: 0 2px 10px rgba(29,158,117,.3); }
+    .btn-success:hover { box-shadow: 0 5px 18px rgba(29,158,117,.4); }
+    .btn-outline { background: #2a2a28; color: #e8e6f0; border: 1px solid rgba(255,255,255,.15); box-shadow: none; }
+    .btn-outline:hover { background: #333331; border-color: rgba(255,255,255,.25); box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+    .btn-danger { background: linear-gradient(135deg, #E24B4A, #A32D2D); color: #fff; box-shadow: 0 2px 10px rgba(163,45,45,.3); }
+    .btn-danger:hover { box-shadow: 0 5px 18px rgba(163,45,45,.4); }
+    .btn-sm { padding: 5px 12px; font-size: 13px; border-radius: 7px; }
+
+    /* ─── Forms ───────────────────────────────────────── */
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #999; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 9px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 9px;
+      font-size: 14px; font-family: inherit; background: #1e1e1d; color: #e8e6f0;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: #7F77DD; box-shadow: 0 0 0 3px rgba(127,119,221,.2); background: #222221;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-section { margin-bottom: 1.5rem; }
+    .form-section-title { font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .75rem; padding-bottom: .5rem; border-bottom: 1px solid rgba(255,255,255,.07); }
+    .errorlist { list-style: none; color: #f09595; font-size: 13px; margin-top: 4px; }
+
+    /* ─── Messages ────────────────────────────────────── */
+    .messages { margin-bottom: 1rem; }
+    .message { padding: 10px 14px; border-radius: 9px; font-size: 14px; margin-bottom: 6px; }
+    .message-success { background: #EAF3DE; color: #27500A; border: 1px solid #c0dd97; }
+    .message-error   { background: #FCEBEB; color: #791F1F; border: 1px solid #f7c1c1; }
+
+    /* ─── Score bars ──────────────────────────────────── */
+    .score-bar  { height: 6px; background: rgba(255,255,255,.1); border-radius: 3px; margin-top: 4px; }
+    .score-fill { height: 6px; border-radius: 3px; background: #534AB7; }
+    .score-fill-green { background: #1D9E75; }
+    .score-fill-blue  { background: #378ADD; }
+
+    /* ─── Empty state ─────────────────────────────────── */
+    .empty { text-align: center; padding: 3rem 1rem; color: #aaa; }
+    .empty-icon { font-size: 40px; margin-bottom: .75rem; }
+    .empty p { font-size: 15px; }
+
+    /* ─── Misc ────────────────────────────────────────── */
+    .days-urgent { color: #E24B4A; font-weight: 500; }
+    .days-soon   { color: #BA7517; }
+    .text-muted  { color: #888; font-size: 13px; }
+    .divider     { border: none; border-top: 1px solid rgba(255,255,255,.07); margin: 1.25rem 0; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .gap-2 { gap: .5rem; display: flex; align-items: center; }
+    .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-brand">SmartStudy</span>
+  <div class="nav-links">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="{% url 'course_list' %}" class="{% if 'course' in request.resolver_match.url_name %}active{% endif %}">Courses</a>
+    <a href="{% url 'schedule' %}" class="{% if request.resolver_match.url_name == 'schedule' %}active{% endif %}">Schedule</a>
+    <a href="{% url 'pomodoro' %}" class="{% if request.resolver_match.url_name == 'pomodoro' %}active{% endif %}">Pomodoro</a>
+    <a href="{% url 'analytics' %}" class="{% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">Analytics</a>
+    <a href="{% url 'group_list' %}" class="{% if 'group' in request.resolver_match.url_name %}active{% endif %}">Groups</a>
+    <a href="{% url 'friends' %}" class="{% if request.resolver_match.url_name == 'friends' %}active{% endif %}">Friends</a>
+  </div>
+  <div class="nav-user">
+    {{ request.user.username }} &nbsp;·&nbsp; <a href="{% url 'logout' %}">Log out</a>
+  </div>
+</nav>
+
+<div class="container">
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message message-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

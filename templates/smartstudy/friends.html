@@ -1,0 +1,75 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}Friends – SmartStudy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Accountability Partners</h1>
+</div>
+
+<div class="card">
+  <div class="card-title">Add a Friend</div>
+  <form method="post" style="display:flex; gap: 10px; align-items: flex-start;">
+    {% csrf_token %}
+    <div class="form-group" style="flex:1; margin-bottom:0;">
+      <label for="{{ form.username.id_for_label }}">Username</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top:22px;">Send Request</button>
+  </form>
+</div>
+
+{% if incoming %}
+<div class="card" style="margin-top:1rem;">
+  <div class="card-title">Pending Requests</div>
+  {% for req in incoming %}
+    <div class="flex-between" style="padding: 8px 0; border-bottom:1px solid rgba(255,255,255,.05);">
+      <span>{{ req.from_user.username }} wants to be accountability partners</span>
+      <div class="gap-2">
+        <form method="post" action="{% url 'friend_request_respond' req.pk 'accept' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success btn-sm">Accept</button>
+        </form>
+        <form method="post" action="{% url 'friend_request_respond' req.pk 'decline' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline btn-sm">Decline</button>
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if outgoing %}
+<div class="card" style="margin-top:1rem;">
+  <div class="card-title">Sent Requests</div>
+  {% for req in outgoing %}
+    <div style="padding: 6px 0; font-size:14px; color:#aaa;">
+      Waiting on {{ req.to_user.username }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card" style="margin-top:1rem;">
+  <div class="card-title">Weekly Leaderboard</div>
+  {% if leaderboard %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>User</th><th>Weekly Hours</th><th>Streak</th></tr></thead>
+        <tbody>
+          {% for entry in leaderboard %}
+            <tr {% if entry.user == request.user %}style="background: rgba(127,119,221,.08);"{% endif %}>
+              <td>{{ entry.user.username }}{% if entry.user == request.user %} <span class="text-muted">(you)</span>{% endif %}</td>
+              <td>{{ entry.weekly_hours }}h</td>
+              <td>🔥 {{ entry.streak }} day{{ entry.streak|pluralize }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">Add a friend to see how you compare!</p>
+  {% endif %}
+</div>
+{% endblock %}

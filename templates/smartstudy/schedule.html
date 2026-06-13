@@ -1,0 +1,88 @@
+{% extends "smartstudy/base.html" %}
+{% block title %}Schedule – SmartStudy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Study Schedule</h1>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 280px;gap:1rem;align-items:start;">
+
+  <!-- Calendar -->
+  <div>
+    {% for day, blocks in days %}
+    <div class="card" style="margin-bottom:.75rem;">
+      <div class="flex-between" style="margin-bottom:{% if blocks %}8px{% else %}0{% endif %};">
+        <div>
+          <span style="font-weight:600;font-size:14px;">{{ day|date:"l, M j" }}</span>
+          {% now "Y-m-d" as today_str %}
+          {% if day|date:"Y-m-d" == today_str %}
+            <span class="badge badge-upcoming" style="margin-left:6px;">Today</span>
+          {% endif %}
+        </div>
+        {% if not blocks %}<span class="text-muted" style="font-size:13px;">Free</span>{% endif %}
+      </div>
+
+      {% for block in blocks %}
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.05);">
+        <span class="color-dot" style="background:{{ block.course.color }};flex-shrink:0;"></span>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:500;">{{ block.course.name }}</div>
+          {% if block.assignment %}<div class="text-muted">{{ block.assignment.title }}</div>{% endif %}
+        </div>
+        <span class="text-muted">{{ block.start_time|time:"g:i A" }} · {{ block.duration_minutes }}min</span>
+        <button class="btn btn-outline btn-sm toggle-block" data-id="{{ block.pk }}"
+                style="{% if block.completed %}background:#1D9E75;border-color:#1D9E75;color:#fff;{% endif %}">
+          {% if block.completed %}✓ Done{% else %}Mark Done{% endif %}
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Preferences -->
+  <div class="card" style="position:sticky;top:72px;">
+    <div class="card-title">⚙️ Schedule Preferences</div>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label>{{ field.label }}</label>
+        {{ field }}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:.5rem;">
+        Save & Regenerate
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.toggle-block').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+    const res = await fetch(`/study/schedule/block/${id}/toggle/`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    });
+    const data = await res.json();
+    if (data.completed) {
+      btn.textContent = '✓ Done';
+      btn.style.background = '#1D9E75';
+      btn.style.borderColor = '#1D9E75';
+      btn.style.color = '#fff';
+    } else {
+      btn.textContent = 'Mark Done';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }
+  });
+});
+</script>
+{% endblock %}
