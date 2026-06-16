@@ -59,7 +59,7 @@ study groups.
 ### 1. Clone and set up a virtual environment
 
 ```bash
-git clone <your-repo-url>
+git clone git@github.com:davlatbekzoirov/SmartStudy.git
 cd "Smart Study"
 python -m venv venv
 source venv/bin/activate   # on Windows: venv\Scripts\activate
