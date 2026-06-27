@@ -1,4 +1,4 @@
-{% extends "smartstudy/base.html" %}
+{% extends 'base.html' %}
 {% block title %}New Study Group – SmartStudy{% endblock %}
 
 {% block content %}
@@ -27,7 +27,7 @@
       </div>
     </div>
     <div class="flex-between">
-      <a href="{% url 'group_list' %}" class="btn btn-outline">Cancel</a>
+      <a href="{% url 'smart_study:group_list' %}" class="btn btn-outline">Cancel</a>
       <button type="submit" class="btn btn-primary">Create Group</button>
     </div>
   </form>

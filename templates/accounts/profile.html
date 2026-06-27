@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — CampusCribs{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">My Profile</h1>
+</div>
+
+<div style="display:grid;grid-template-columns:200px 1fr;gap:1.5rem;align-items:start">
+
+  <div class="card" style="text-align:center">
+    <div class="card-title">Photo</div>
+    {% if request.user.profile.photo %}
+      <img src="{{ request.user.profile.photo.url }}" alt="Profile photo"
+           style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.1);margin-bottom:.75rem">
+    {% else %}
+      <div style="
+        width:120px;height:120px;border-radius:50%;
+        background:linear-gradient(135deg,#534AB7,#7F77DD);
+        display:flex;align-items:center;justify-content:center;
+        font-size:42px;font-weight:700;color:#fff;
+        margin:0 auto .75rem;
+      ">{{ request.user.username|slice:":1"|upper }}</div>
+    {% endif %}
+    <div class="text-muted">{{ request.user.username }}</div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-title">Account Details</div>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label>{{ form.photo.label }}</label>
+          {{ form.photo }}
+          {% if form.photo.errors %}
+            <ul class="errorlist">{% for e in form.photo.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+          {% endif %}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.username.label }}</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="text" value="{{ request.user.email }}" disabled
+                   style="opacity:.6;cursor:not-allowed">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.first_name.label }}</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.last_name.label }}</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+
+        {% if form.non_field_errors %}
+          <div style="color:#A32D2D;font-size:13px;margin-bottom:.75rem;padding:8px 12px;background:#FCEBEB;border-radius:8px">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="flex-between">
+        <div>
+          <div class="card-title" style="margin-bottom:.25rem">Email Address</div>
+          <div class="text-muted">{{ request.user.email }}</div>
+        </div>
+        <a href="{% url 'email_change_request' %}" class="btn btn-outline btn-sm">Change email</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between">
+        <div>
+          <div class="card-title" style="margin-bottom:.25rem">Password</div>
+          <div class="text-muted">Last changed: not tracked</div>
+        </div>
+        <a href="{% url 'password_change' %}" class="btn btn-outline btn-sm">Change password</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

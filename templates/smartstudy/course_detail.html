@@ -1,11 +1,11 @@
-{% extends "smartstudy/base.html" %}
+{% extends 'base.html' %}
 {% block title %}{{ course.name }} – SmartStudy{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div>
     <div class="text-muted" style="margin-bottom:4px;">
-      <a href="{% url 'course_list' %}">Courses</a> /
+      <a href="{% url 'smart_study:course_list' %}">Courses</a> /
     </div>
     <h1 class="page-title gap-2">
       <span class="color-dot" style="background:{{ course.color }};width:14px;height:14px;"></span>
@@ -13,9 +13,9 @@
     </h1>
   </div>
   <div class="gap-2">
-    <a href="{% url 'category_create' course.pk %}" class="btn btn-outline btn-sm">+ Category</a>
-    <a href="{% url 'assignment_create' course.pk %}" class="btn btn-primary btn-sm">+ Assignment</a>
-    <a href="{% url 'course_edit' course.pk %}" class="btn btn-outline btn-sm">Edit</a>
+    <a href="{% url 'smart_study:category_create' course.pk %}" class="btn btn-outline btn-sm">+ Category</a>
+    <a href="{% url 'smart_study:assignment_create' course.pk %}" class="btn btn-primary btn-sm">+ Assignment</a>
+    <a href="{% url 'smart_study:course_edit' course.pk %}" class="btn btn-outline btn-sm">Edit</a>
   </div>
 </div>
 
@@ -53,7 +53,7 @@
           <span style="font-size:13px;color:#aaa;">
             {% with g=cat.computed_grade %}{% if g %}{{ g }}%{% else %}–{% endif %}{% endwith %}
           </span>
-          <a href="{% url 'category_delete' cat.pk %}" class="btn btn-danger btn-sm">✕</a>
+          <a href="{% url 'smart_study:category_delete' cat.pk %}" class="btn btn-danger btn-sm">✕</a>
         </div>
       </div>
 
@@ -88,8 +88,8 @@
               <td><span class="badge badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
               <td>
                 <div class="gap-2">
-                  <a href="{% url 'assignment_edit' a.pk %}" class="btn btn-outline btn-sm">Edit</a>
-                  <a href="{% url 'assignment_delete' a.pk %}" class="btn btn-danger btn-sm">✕</a>
+                  <a href="{% url 'smart_study:assignment_edit' a.pk %}" class="btn btn-outline btn-sm">Edit</a>
+                  <a href="{% url 'smart_study:assignment_delete' a.pk %}" class="btn btn-danger btn-sm">✕</a>
                 </div>
               </td>
             </tr>
@@ -98,7 +98,7 @@
         </table>
       </div>
       {% else %}
-        <p class="text-muted" style="font-size:13px;">No assignments yet. <a href="{% url 'assignment_create' course.pk %}">Add one.</a></p>
+        <p class="text-muted" style="font-size:13px;">No assignments yet. <a href="{% url 'smart_study:assignment_create' course.pk %}">Add one.</a></p>
       {% endif %}
     </div>
     {% empty %}
@@ -106,7 +106,7 @@
         <div class="empty">
           <div class="empty-icon">🗂️</div>
           <p>No grade categories yet.<br>
-          <a href="{% url 'category_create' course.pk %}">Add Finals, Homework, Quizzes…</a></p>
+          <a href="{% url 'smart_study:category_create' course.pk %}">Add Finals, Homework, Quizzes…</a></p>
         </div>
       </div>
     {% endfor %}

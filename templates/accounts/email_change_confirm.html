@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Confirm Email — CampusCribs{% endblock %}
+{% block content %}
+
+<div style="max-width:420px;margin:3.5rem auto">
+  <div style="text-align:center;margin-bottom:2rem">
+    <div style="
+      width:56px;height:56px;
+      background:linear-gradient(135deg,#1D9E75,#5DCAA5);
+      border-radius:16px;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 1rem;
+      box-shadow:0 6px 20px rgba(29,158,117,.3);
+      font-size:24px;
+    ">✉️</div>
+    <h1 style="font-size:22px;font-weight:700;letter-spacing:-.02em">Check your inbox</h1>
+    <p style="color:#888;font-size:14px;margin-top:5px">
+      We sent a 6-digit code to <strong style="color:#e8e6f0">{{ new_email }}</strong>
+    </p>
+  </div>
+
+  <div class="card" style="border-radius:16px;padding:2rem;box-shadow:0 4px 24px rgba(83,74,183,.1)">
+    
+    {% if form.errors %}
+      <div style="background: #FCEBEB; color: #A32D2D; padding: 12px; border-radius: 8px; margin-bottom: 1rem; font-size: 14px;">
+        <strong>Please correct the following errors:</strong>
+        {{ form.non_field_errors }}
+        {% for field in form %}
+          {% if field.errors %}
+            <div>{{ field.label }}: {{ field.errors|striptags }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-success" style="width:100%;justify-content:center;margin-top:.75rem;padding:11px 18px;font-size:15px;border-radius:10px">
+        Confirm
+      </button>
+    </form>
+  </div>
+
+  <p style="text-align:center;font-size:14px;color:#888;margin-top:1.25rem">
+    Didn't get it? <a href="{% url 'email_change_request' %}" style="color:#534AB7;font-weight:600">Try a different email</a>
+  </p>
+</div>
+{% endblock %}

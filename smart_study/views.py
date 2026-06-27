@@ -90,7 +90,7 @@ def course_create(request):
             course.user = request.user
             course.save()
             messages.success(request, f'Course "{course.name}" created.')
-            return redirect('course_detail', pk=course.pk)
+            return redirect('smart_study:course_detail', pk=course.pk)
     else:
         form = CourseForm()
     return render(request, 'smartstudy/course_form.html', {'form': form, 'action': 'Create'})
@@ -146,7 +146,7 @@ def course_edit(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, 'Course updated.')
-            return redirect('course_detail', pk=course.pk)
+            return redirect('smart_study:course_detail', pk=course.pk)
     else:
         form = CourseForm(instance=course)
     return render(request, 'smartstudy/course_form.html', {'form': form, 'action': 'Edit', 'course': course})
@@ -159,7 +159,7 @@ def course_delete(request, pk):
         name = course.name
         course.delete()
         messages.success(request, f'"{name}" deleted.')
-        return redirect('course_list')
+        return redirect('smart_study:course_list')
     return render(request, 'smartstudy/confirm_delete.html', {'object': course, 'type': 'Course'})
 
 
@@ -175,7 +175,7 @@ def category_create(request, course_pk):
             cat.course = course
             cat.save()
             messages.success(request, f'Category "{cat.name}" added.')
-            return redirect('course_detail', pk=course.pk)
+            return redirect('smart_study:course_detail', pk=course.pk)
     else:
         form = GradeCategoryForm()
     return render(request, 'smartstudy/category_form.html', {'form': form, 'course': course})
@@ -188,7 +188,7 @@ def category_delete(request, pk):
     if request.method == 'POST':
         cat.delete()
         messages.success(request, 'Category deleted.')
-        return redirect('course_detail', pk=course_pk)
+        return redirect('smart_study:course_detail', pk=course_pk)
     return render(request, 'smartstudy/confirm_delete.html', {'object': cat, 'type': 'Category'})
 
 
@@ -204,7 +204,7 @@ def assignment_create(request, course_pk):
             prefs = get_or_create_prefs(request.user)
             generate_study_blocks(a, prefs)
             messages.success(request, f'Assignment "{a.title}" created with study blocks.')
-            return redirect('course_detail', pk=course.pk)
+            return redirect('smart_study:course_detail', pk=course.pk)
     else:
         form = AssignmentForm(course=course)
     return render(request, 'smartstudy/assignment_form.html', {'form': form, 'course': course, 'action': 'Create'})
@@ -221,7 +221,7 @@ def assignment_edit(request, pk):
             prefs = get_or_create_prefs(request.user)
             generate_study_blocks(a, prefs)
             messages.success(request, 'Assignment updated.')
-            return redirect('course_detail', pk=course.pk)
+            return redirect('smart_study:course_detail', pk=course.pk)
     else:
         form = AssignmentForm(instance=a, course=course)
     return render(request, 'smartstudy/assignment_form.html', {'form': form, 'course': course, 'action': 'Edit'})
@@ -234,7 +234,7 @@ def assignment_delete(request, pk):
     if request.method == 'POST':
         a.delete()
         messages.success(request, 'Assignment deleted.')
-        return redirect('course_detail', pk=course_pk)
+        return redirect('smart_study:course_detail', pk=course_pk)
     return render(request, 'smartstudy/confirm_delete.html', {'object': a, 'type': 'Assignment'})
 
 
@@ -256,7 +256,7 @@ def schedule_view(request):
             for a in upcoming_assignments:
                 generate_study_blocks(a, prefs)
             messages.success(request, 'Preferences saved and schedule regenerated.')
-            return redirect('schedule')
+            return redirect('smart_study:schedule')
     else:
         form = StudyPrefsForm(instance=prefs)
 
@@ -372,7 +372,7 @@ def group_create(request):
             group = form.save(user=request.user)
             GroupMembership.objects.create(user=request.user, group=group)
             messages.success(request, f'Group "{group.name}" created.')
-            return redirect('group_detail', pk=group.pk)
+            return redirect('smart_study:group_detail', pk=group.pk)
     else:
         form = StudyGroupForm()
     return render(request, 'smartstudy/group_form.html', {'form': form})
@@ -388,7 +388,7 @@ def group_detail(request, pk):
         if 'join' in request.POST and not is_member:
             GroupMembership.objects.create(user=request.user, group=group)
             messages.success(request, f'Joined "{group.name}".')
-            return redirect('group_detail', pk=group.pk)
+            return redirect('smart_study:group_detail', pk=group.pk)
 
         if 'submit_exam_date' in request.POST and is_member:
             vote_form = ExamDateVoteForm(request.POST)
@@ -398,7 +398,7 @@ def group_detail(request, pk):
                     defaults={'exam_date': vote_form.cleaned_data['exam_date']},
                 )
                 messages.success(request, 'Exam date submitted.')
-                return redirect('group_detail', pk=group.pk)
+                return redirect('smart_study:group_detail', pk=group.pk)
 
     my_vote = ExamDateVote.objects.filter(group=group, user=request.user).first()
 
@@ -419,7 +419,7 @@ def group_leave(request, pk):
     GroupMembership.objects.filter(user=request.user, group=group).delete()
     ExamDateVote.objects.filter(user=request.user, group=group).delete()
     messages.success(request, f'Left "{group.name}".')
-    return redirect('group_list')
+    return redirect('smart_study:group_list')
 
 
 # ─── Accountability Partners ────────────────────────────────────────────────
@@ -442,7 +442,7 @@ def friends_view(request):
                     messages.success(request, f'Friend request sent to {username}.')
             except User.DoesNotExist:
                 messages.error(request, f'No user named "{username}".')
-            return redirect('friends')
+            return redirect('smart_study:friends')
     else:
         form = FriendRequestForm()
 
@@ -469,4 +469,4 @@ def friend_request_respond(request, pk, action):
     elif action == 'decline':
         req.status = 'declined'
         req.save()
-    return redirect('friends')
+    return redirect('smart_study:friends')

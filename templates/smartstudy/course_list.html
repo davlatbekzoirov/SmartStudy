@@ -1,10 +1,10 @@
-{% extends "smartstudy/base.html" %}
+{% extends 'base.html' %}
 {% block title %}Courses – SmartStudy{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <h1 class="page-title">Courses</h1>
-  <a href="{% url 'course_create' %}" class="btn btn-primary">+ New Course</a>
+  <a href="{% url 'smart_study:course_create' %}" class="btn btn-primary">+ New Course</a>
 </div>
 
 {% if summaries %}
@@ -27,7 +27,7 @@
           <td>
             <span class="gap-2">
               <span class="color-dot" style="background:{{ s.course.color }};"></span>
-              <a href="{% url 'course_detail' s.course.pk %}" style="color:#e8e6f0;font-weight:500;">{{ s.course.name }}</a>
+              <a href="{% url 'smart_study:course_detail' s.course.pk %}" style="color:#e8e6f0;font-weight:500;">{{ s.course.name }}</a>
             </span>
           </td>
           <td class="text-muted">{{ s.course.code|default:"—" }}</td>
@@ -46,8 +46,8 @@
           <td><strong>{{ s.letter }}</strong></td>
           <td>
             <div class="gap-2">
-              <a href="{% url 'course_edit' s.course.pk %}" class="btn btn-outline btn-sm">Edit</a>
-              <a href="{% url 'course_delete' s.course.pk %}" class="btn btn-danger btn-sm">Delete</a>
+              <a href="{% url 'smart_study:course_edit' s.course.pk %}" class="btn btn-outline btn-sm">Edit</a>
+              <a href="{% url 'smart_study:course_delete' s.course.pk %}" class="btn btn-danger btn-sm">Delete</a>
             </div>
           </td>
         </tr>
@@ -60,7 +60,7 @@
 <div class="card">
   <div class="empty">
     <div class="empty-icon">📚</div>
-    <p>No courses yet. <a href="{% url 'course_create' %}">Add your first course!</a></p>
+    <p>No courses yet. <a href="{% url 'smart_study:course_create' %}">Add your first course!</a></p>
   </div>
 </div>
 {% endif %}

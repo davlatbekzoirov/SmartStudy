@@ -1,10 +1,10 @@
-{% extends "smartstudy/base.html" %}
+{% extends 'base.html' %}
 {% block title %}Dashboard – SmartStudy{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <h1 class="page-title">Dashboard</h1>
-  <a href="{% url 'course_create' %}" class="btn btn-primary">+ New Course</a>
+  <a href="{% url 'smart_study:course_create' %}" class="btn btn-primary">+ New Course</a>
 </div>
 
 {% if burnout_warnings %}
@@ -17,7 +17,7 @@
           </div>
           <p style="font-size:14px; color:#e8e6f0;">{{ w.message }}</p>
         </div>
-        <a href="{% url 'schedule' %}" class="btn btn-outline btn-sm" style="white-space:nowrap;">Review schedule</a>
+        <a href="{% url 'smart_study:schedule' %}" class="btn btn-outline btn-sm" style="white-space:nowrap;">Review schedule</a>
       </div>
     </div>
   {% endfor %}
@@ -58,7 +58,7 @@
           <div class="flex-between" style="margin-bottom:4px;">
             <span class="gap-2">
               <span class="color-dot" style="background:{{ s.course.color }};"></span>
-              <a href="{% url 'course_detail' s.course.pk %}" style="color:#e8e6f0;font-size:14px;font-weight:500;">{{ s.course.name }}</a>
+              <a href="{% url 'smart_study:course_detail' s.course.pk %}" style="color:#e8e6f0;font-size:14px;font-weight:500;">{{ s.course.name }}</a>
             </span>
             <span style="font-size:13px;color:#aaa;">
               {% if s.grade %}{{ s.grade }}% &nbsp;<strong style="color:#e8e6f0;">{{ s.letter }}</strong>{% else %}—{% endif %}
@@ -75,7 +75,7 @@
     {% else %}
       <div class="empty" style="padding:1.5rem;">
         <div class="empty-icon">📚</div>
-        <p>No courses yet. <a href="{% url 'course_create' %}">Add one!</a></p>
+        <p>No courses yet. <a href="{% url 'smart_study:course_create' %}">Add one!</a></p>
       </div>
     {% endif %}
   </div>
@@ -99,7 +99,7 @@
           <div class="text-muted">{{ a.course.name }} · {{ a.category.name }}</div>
         </div>
       {% endfor %}
-      <a href="{% url 'schedule' %}" class="text-muted" style="font-size:13px;">View schedule →</a>
+      <a href="{% url 'smart_study:schedule' %}" class="text-muted" style="font-size:13px;">View schedule →</a>
     {% else %}
       <div class="empty" style="padding:1.5rem;">
         <div class="empty-icon">✅</div>

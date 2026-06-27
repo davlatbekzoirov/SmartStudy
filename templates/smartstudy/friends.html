@@ -1,4 +1,4 @@
-{% extends "smartstudy/base.html" %}
+{% extends 'base.html' %}
 {% block title %}Friends – SmartStudy{% endblock %}
 
 {% block content %}
@@ -26,11 +26,11 @@
     <div class="flex-between" style="padding: 8px 0; border-bottom:1px solid rgba(255,255,255,.05);">
       <span>{{ req.from_user.username }} wants to be accountability partners</span>
       <div class="gap-2">
-        <form method="post" action="{% url 'friend_request_respond' req.pk 'accept' %}">
+        <form method="post" action="{% url 'smart_study:friend_request_respond' req.pk 'accept' %}">
           {% csrf_token %}
           <button type="submit" class="btn btn-success btn-sm">Accept</button>
         </form>
-        <form method="post" action="{% url 'friend_request_respond' req.pk 'decline' %}">
+        <form method="post" action="{% url 'smart_study:friend_request_respond' req.pk 'decline' %}">
           {% csrf_token %}
           <button type="submit" class="btn btn-outline btn-sm">Decline</button>
         </form>

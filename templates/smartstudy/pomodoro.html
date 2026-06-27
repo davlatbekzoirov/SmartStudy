@@ -1,4 +1,4 @@
-{% extends "smartstudy/base.html" %}
+{% extends 'base.html' %}
 {% block title %}Pomodoro – SmartStudy{% endblock %}
 
 {% block extra_head %}
@@ -227,7 +227,7 @@ async function logSession() {
   const courseSelect = document.getElementById('logCourse');
   const notes = document.getElementById('logNotes').value;
   const courseId = courseSelect.value || null;
-  const resp = await fetch('{% url "pomodoro_log" %}', {
+  const resp = await fetch('{% url "smart_study:pomodoro_log" %}', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
     body: JSON.stringify({ course_id: courseId, duration_minutes: WORK_MIN, notes }),
